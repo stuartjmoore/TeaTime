@@ -1,0 +1,129 @@
+
+.account-selector 
+{
+	-webkit-border-image:url(../images/header-accounts-button.png) 0 16 0 16 repeat repeat;
+	border-width: 0px 16px 0px 16px;
+	-webkit-box-sizing: border-box;
+	float:right;
+	height:34px;
+	margin: 9px 0px 0px 0px;
+	text-transform: uppercase;
+	padding-top:1px;
+	position:relative;
+	font-size: 14px;
+	line-height: 32px;
+}
+
+.account-selector:active, .account-selector.selected	
+{ 
+	-webkit-border-image:url(../images/header-accounts-button-press.png) 	0 16 0 16 repeat repeat; 
+}
+
+
+.account-selector .down-arrow 
+{
+	background: transparent;
+	float:right;
+	display:inline-block;
+	background: url(../images/header-arrow-down.png) right center no-repeat;
+	height:36px;
+	margin-right:-5px;
+	width:10px;
+}
+
+.account-selector .account-name 
+{
+	margin-left:-5px;
+	padding-right: 2px;
+	background: transparent;
+	display:inline-block;
+	min-width: 12px;
+	max-width: 80px;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	overflow: hidden;
+	font-size: 14px;
+}
+.account-selector.selected .account-name
+{
+	color: black;
+}
+
+
+
+.teaIcon
+{
+	background: url(../images/timedate-icon.png) center center no-repeat;
+}
+
+
+
+
+.teaInfoIcon 
+{
+	-webkit-border-image:url(../images/info.png) 0 12 0 12 repeat repeat;
+	border-width: 0 12px 0 12px;
+	-webkit-box-sizing: border-box;
+	float:right;
+	height: 24px;
+	margin: 9px 0 0 0;
+	padding-top:1px;
+	position:relative;
+}
+
+.icon.teaLeafIcon
+{
+	background: url(../images/leaf-tea-green.png) center center no-repeat;
+}
+
+
+
+#tea-row .palm-row-wrapper
+{
+	padding: 8px;
+}
+#tea-row.palm-row.first .palm-row-wrapper
+{
+	padding-top: 0;
+}
+#tea-row.palm-row.single .palm-row-wrapper
+{
+	padding-top: 0;
+}
+
+
+#tea-row .tea-row-title
+{
+}
+
+#tea-row .tea-row-subtitle
+{
+	color: #666;
+	
+	font-size: 14px;
+}
+#tea-row.palm-row.selected .palm-row-wrapper .tea-row-subtitle
+{
+	color: black;
+}
+
+
+
+.timer
+{
+	font-size: 48px;
+	
+	text-align: center;
+	margin: 8px;
+}
+
+
+
+#minPicker 
+{
+	float:left;
+}
+#secPicker
+{
+	float:left;
+}

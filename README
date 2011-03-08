@@ -1,0 +1,17 @@
+Tea Time 1.0.0
+
+My first WebOS app.
+
+It's a tea timer.
+
+TEA TIMER MANTRA
+
+¥ Tea Timer must start timing quickly.
+¥ It must match WebOS's style and UI.
+¥ It must allow for multiple steepings.
+¥ It must record my tea history (coming soon).
+¥ It must allow me track my collection (coming soon).
+
+FORKish
+
+Tea Time is almost a fork of TeaTimer (http://code.google.com/p/webos-teatimer/). After designing Tea Time, I went looking for an app that could do all this. TeaTimer was close. It worked for awhile, but I decided I could do better. Tea Time isn't a fork, as it's coded from scratch, but it's inspired by TeaTimer.

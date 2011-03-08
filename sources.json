@@ -1,0 +1,19 @@
+[
+    {"source": "app/assistants/stage-assistant.js"},
+    {
+        "scenes": "main",
+        "source": "app/assistants/main-assistant.js"
+    },
+    {
+        "scenes": "timer",
+        "source": "app/assistants/timer-assistant.js"
+    },
+    {
+        "scenes": "new-tea",
+        "source": "app/assistants/new-tea-assistant.js"
+    },
+    {
+        "scenes": "new-steeping",
+        "source": "app/assistants/new-steeping-assistant.js"
+    }
+]
