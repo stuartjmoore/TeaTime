@@ -38,36 +38,27 @@ NewTeaAssistant.prototype.setup = function()
 	this.controller.get('teaType').innerHTML = this.group;
 	
 	
-	this.controller.get('steepings-list').innerHTML = "";
+	this.steepingAttr = {  
+        listTemplate: "new-tea/steeping-list-temp",
+		itemTemplate: "new-tea/steeping-row-temp", 
+        addItemLabel: "New Steeping...",
+		swipeToDelete: true,
+		reorderable: true,
+		renderLimit: 20
+	};  
+	this.steepingModel = { listTitle : $L("Steepings"), items : this.steepings };
+	this.controller.setupWidget("steeping-list", this.steepingAttr, this.steepingModel);  
 	
-	for(var i = 0; i < this.steepings.length; i++)
-	{
-	    if(this.steepings[i].sec < 10)
-			secLabel = '0' + this.steepings[i].sec;
-		else
-			secLabel = this.steepings[i].sec;
-		
-		this.controller.get('steepings-list').innerHTML += "<div class='palm-row' id='steeping-"+ i +"' x-mojo-touch-feedback='momentary'> <div class='palm-row-wrapper'> <div class='icon left teaIcon'></div> <div class='label'></div> <div class='title'>" + this.steepings[i].min + ":" + secLabel + " <span style='color:#666;'>@</span> " + this.steepings[i].temp + "&deg;F</div> </div> </div>";
-	}
-	
-	this.controller.get('steepings-list').innerHTML += "<div class='palm-row last  add-item' id='new-steeping' x-mojo-touch-feedback='momentary'> <div class='palm-row-wrapper'> <div name='palm-add-item' class='list-item-add-button'> </div> <div name='palm-add-item' class='title' x-mojo-loc=''> New Steeping... </div> </div> </div>";
 	
 	this.controller.setupWidget("teaNotes",
-        this.attributes = {
+		{
             hintText: 'Notes',
             multiline: true
-         },
-         this.notesModel = {
-             value: this.notes
-         }
+		},
+		this.notesModel = {
+			value: this.notes
+		}
     ); 
-    
-    this.appMenuModel = {
-    	items: [
-       		{label: "Delete Tea", command: 'delete-tea', disabled: this.isNew}
-    	]
-	};
-	this.controller.setupWidget(Mojo.Menu.appMenu, {}, this.appMenuModel); 
     
         
 	this.cmdMenuModel = 
@@ -111,9 +102,21 @@ NewTeaAssistant.prototype.newSteeping = function(event)
 	Mojo.Controller.stageController.pushScene("new-steeping");  
 };
 
-NewTeaAssistant.prototype.editSteeping = function(event, i) 
+NewTeaAssistant.prototype.reorderSteeping = function(event) 
 {
-	Mojo.Controller.stageController.pushScene("new-steeping", this.steepings[i]); 
+	temp = this.steepings[event.fromIndex];
+	this.steepings.splice(event.fromIndex, 1);
+	this.steepings.splice(event.toIndex, 0, temp);
+};
+
+NewTeaAssistant.prototype.deleteSteeping = function(event) 
+{
+	this.steepings.splice(event.index, 1);
+};
+
+NewTeaAssistant.prototype.editSteeping = function(event) 
+{
+	Mojo.Controller.stageController.pushScene("new-steeping", event.item); 
 };
 
 
@@ -166,17 +169,6 @@ NewTeaAssistant.prototype.handleCommand = function(event)
 				Mojo.Controller.stageController.popScenesTo("main", this.result);
 					
                 break;
-			case 'delete-tea':
-				this.controller.showAlertDialog({
-    				onChoose: this.deleteTea.bindAsEventListener(this),
-    				title: $L("Delete?"),
-    				message: $L("Are you sure you want to delete this tea?"),
-    				choices:[
-    				    {label:$L("Delete Tea"), value:"delete", type:'negative'},    
-    				    {label:$L("Cancel"), value:"cancel", type:'dismiss'}    
-    				]
-				}); 			
-				break;
         }
     }
 }; 
@@ -186,58 +178,55 @@ NewTeaAssistant.prototype.activate = function(event)
 	if(event)
 	{
 		if(event.kind == "new")
+		{
+			if(event.steeping.sec < 10)
+	    		secLabel = '0' + event.steeping.sec;
+	   		else
+	    		secLabel = event.steeping.sec;
+	    	
 			this.steepings.push({ min : event.steeping.min, sec: event.steeping.sec, temp: event.steeping.temp });
-		else if(event.kind == "delete")
-		{
-		    for(var i = 0; i < this.steepings.length; i++) 
-		    {
-            	if(this.steepings[i] == event.steeping) 
-            	{
-		    		this.steepings.splice(i, 1);
-        			break;
-		    	}
-		    }
 		}
-
-		this.controller.get('steepings-list').innerHTML = "";
-	
-		for(var i = 0; i < this.steepings.length; i++)
-		{
-	    	if(this.steepings[i].sec < 10)
-				secLabel = '0' + this.steepings[i].sec;
-			else
-				secLabel = this.steepings[i].sec;
 		
-			this.controller.get('steepings-list').innerHTML += "<div class='palm-row' id='steeping-"+i+"' x-mojo-touch-feedback='momentary'> <div class='palm-row-wrapper'> <div class='icon left teaIcon'></div> <div class='label'></div> <div class='title'>" + this.steepings[i].min + ":" + secLabel + " <span style='color:#666;'>@</span> " + this.steepings[i].temp + "&deg;F</div> </div> </div>";
+		//this needs to change
+		for(var i = 0; i < this.steepingModel.items.length; i++)
+		{	
+			if(this.steepingModel.items[i].sec < 10)
+	    		this.steepingModel.items[i].secLabel = '0' + this.steepingModel.items[i].sec;
+	    	else
+	    		this.steepingModel.items[i].secLabel = this.steepingModel.items[i].sec;
 		}
-	
-		this.controller.get('steepings-list').innerHTML += "<div class='palm-row last  add-item' id='new-steeping' x-mojo-touch-feedback='momentary'> <div class='palm-row-wrapper'> <div name='palm-add-item' class='list-item-add-button'> </div> <div name='palm-add-item' class='title' x-mojo-loc=''> New Steeping... </div> </div> </div>";
+		
+		this.controller.modelChanged(this.steepingModel);
 	}
 			
-	for(var i = 0; i < this.steepings.length; i++)
-	{
-		this.editSteepingHandler = this.editSteeping.bindAsEventListener(this, i);
-		var id = "steeping-" + i;
-		this.controller.get(id).observe(Mojo.Event.tap, this.editSteepingHandler );
-	}
 		
 	this.typeSelectorHandler = this.typeSelector.bindAsEventListener(this);
 	this.controller.get('tea-type-button').observe(Mojo.Event.tap, this.typeSelectorHandler );
 	
 	this.newSteepingHandler = this.newSteeping.bindAsEventListener(this);
-	this.controller.get('new-steeping').observe(Mojo.Event.tap, this.newSteepingHandler );
+	this.controller.get('steeping-list').observe(Mojo.Event.listAdd, this.newSteepingHandler );
+	
+	this.deleteSteepingHandler = this.deleteSteeping.bindAsEventListener(this);
+	this.controller.get('steeping-list').observe(Mojo.Event.listDelete, this.deleteSteepingHandler );
+	
+	this.reorderSteepingHandler = this.reorderSteeping.bindAsEventListener(this);
+	this.controller.get('steeping-list').observe(Mojo.Event.listReorder, this.reorderSteepingHandler );
+	
+	this.editSteepingHandler = this.editSteeping.bindAsEventListener(this);
+	this.controller.get('steeping-list').observe(Mojo.Event.listTap, this.editSteepingHandler );
 };
 
 NewTeaAssistant.prototype.deactivate = function(event) 
 {
 	this.controller.get('tea-type-button').stopObserving(Mojo.Event.tap, this.typeSelectorHandler);
-	this.controller.get('new-steeping').stopObserving(Mojo.Event.tap, this.newSteepingHandler);
 	
-	for(var i = 0; i < this.steepings.length; i++)
-	{
-		var id = 'steeping-' + i;
-		this.controller.get(id).stopObserving(Mojo.Event.tap, this.editSteepingHandler);
-	}
+	this.controller.get('steeping-list').stopObserving(Mojo.Event.listAdd, this.newSteepingHandler);
+	
+	this.controller.get('steeping-list').stopObserving(Mojo.Event.listDelete, this.deleteSteepingHandler);
+	
+	this.controller.get('steeping-list').stopObserving(Mojo.Event.listReorder, this.reorderSteepingHandler);
+	
+	this.controller.get('steeping-list').stopObserving(Mojo.Event.listTap, this.editSteepingHandler);
 };
 
 NewTeaAssistant.prototype.cleanup = function(event) 

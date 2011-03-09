@@ -40,8 +40,8 @@ MainAssistant.prototype.dbTeasGot = function(teas)
 	if(teas)
 		this.teaModel.items = teas;
 	
-	this.teaModel.items.sort(function(a,b) { return a.group < b.group ? -1 : (a.group > b.group ? 1 : 0); });
-	
+	//this.teaModel.items.sort(function(a,b) { return a.group < b.group ? -1 : (a.group > b.group ? 1 : 0); });
+	/*
 	for(var i = 0; i < this.teaModel.items.length; i++)
 	{	
 	    this.teaModel.items[i].min = this.teaModel.items[i].steepings[this.teaModel.items[i].steeped].min;
@@ -59,7 +59,7 @@ MainAssistant.prototype.dbTeasGot = function(teas)
 	    else
 	    	this.teaModel.items[i].steepedLabel = "";
 	}
-	
+	*/
 	this.controller.modelChanged(this.teaModel);
 };
   
@@ -126,7 +126,7 @@ MainAssistant.prototype.activate = function(event)
 				}
 			}
 			
-			this.teaModel.items.sort(function(a,b) { return a.group < b.group ? -1 : (a.group > b.group ? 1 : 0); });
+			this.teaModel.items.sort(function(a,b) { return a.group < b.group ? -1 : (a.group > b.group ?  1 : 0); });
 		}
 		
 		this.db.add("teas", this.teaModel.items, this.dbSuccess.bind(this), this.dbFailed.bind(this));

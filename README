@@ -9,6 +9,7 @@ TEA TIMER MANTRA
 - Tea Timer must start timing quickly.
 - It must match WebOS's style and UI.
 - It must allow for multiple steepings.
+- It should notify me without requiring interaction afterwards.
 - It must record my tea history (coming soon).
 - It must allow me track my collection (coming soon).
 
