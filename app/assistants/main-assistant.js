@@ -40,26 +40,43 @@ MainAssistant.prototype.dbTeasGot = function(teas)
 	if(teas)
 		this.teaModel.items = teas;
 	
-	//this.teaModel.items.sort(function(a,b) { return a.group < b.group ? -1 : (a.group > b.group ? 1 : 0); });
-	/*
-	for(var i = 0; i < this.teaModel.items.length; i++)
-	{	
-	    this.teaModel.items[i].min = this.teaModel.items[i].steepings[this.teaModel.items[i].steeped].min;
-	    this.teaModel.items[i].temp = this.teaModel.items[i].steepings[this.teaModel.items[i].steeped].temp;
-	
-	    if(this.teaModel.items[i].steepings[this.teaModel.items[i].steeped].sec < 10)
-	    	this.teaModel.items[i].secLabel = '0' + this.teaModel.items[i].steepings[this.teaModel.items[i].steeped].sec;
-	    else
-	    	this.teaModel.items[i].secLabel = this.teaModel.items[i].steepings[this.teaModel.items[i].steeped].sec;
-	    	
-	    if(this.teaModel.items[i].steeped > 1)
-	    	this.teaModel.items[i].steepedLabel = " - " + this.teaModel.items[i].steeped + " steepings";
-	    else if(this.teaModel.items[i].steeped == 1)
-	    	this.teaModel.items[i].steepedLabel = " - 1 steeping";
-	    else
-	    	this.teaModel.items[i].steepedLabel = "";
+	if(this.teaModel.items.length > 0 && !this.teaModel.items[0].timeLabel) // Change db.
+	{
+		for(var i = 0; i < this.teaModel.items.length; i++)
+		{ 
+		    if(this.teaModel.items[i].steeped > 1)
+		    	this.teaModel.items[i].steepingsLabel = " - " + this.teaModel.items[i].steeped + " steepings";
+		    else if(this.teaModel.items[i].steeped == 1)
+		    	this.teaModel.items[i].steepingsLabel = " - 1 steeping";
+		
+			for(var j = 0; j < this.teaModel.items[i].steepings.length; j++)
+			{
+				min = this.teaModel.items[i].steepings[j].min;
+				sec = this.teaModel.items[i].steepings[j].sec;
+				temp = this.teaModel.items[i].steepings[j].temp;
+			
+				this.teaModel.items[i].steepings[j].time = sec + 60*min;
+				
+		   		if(this.teaModel.items[i].steepings[j].sec < 10)
+		    		this.teaModel.items[i].steepings[j].timeLabel = min + ":0" + sec;
+		    	else
+		    		this.teaModel.items[i].steepings[j].timeLabel = min + ":" + sec;
+		    		
+				this.teaModel.items[i].steepings[j].tempLabel = temp + "&deg;F";
+				
+				if(j == this.teaModel.items[i].steeped)
+				{
+		   			if(sec < 10)
+		    			this.teaModel.items[i].timeLabel = min + ":0" + sec;
+		    		else
+		    			this.teaModel.items[i].timeLabel = min + ":" + sec;
+		    			
+					this.teaModel.items[i].tempLabel = temp + "&deg;F";
+				}
+			}
+		}	
 	}
-	*/
+	
 	this.controller.modelChanged(this.teaModel);
 };
   
@@ -69,7 +86,6 @@ MainAssistant.prototype.dbFailed = function(transaction, result)
 };  
 MainAssistant.prototype.dbSuccess = function()
 {
-	//Mojo.Controller.errorDialog("Database success.");
 };  
 
 
@@ -103,17 +119,18 @@ MainAssistant.prototype.activate = function(event)
 		if(event == "timer done")
 		{
 			Mojo.Controller.getAppController().playSoundNotification("vibrate", "");
-			Mojo.Controller.getAppController().playSoundNotification("vibrate", "");
-			Mojo.Controller.getAppController().playSoundNotification("vibrate", "");
 			//this.controller.stageController.deactivate();
 		}
-		if(event == "timer reset")
+		if(event == "steepings reset")
 		{
 		}
 		else
 		{
 			if(event.kind == "new")
+			{
 				this.teaModel.items.push(event.tea);
+				this.teaModel.items.sort(function(a,b){ return a.group < b.group ? -1 : (a.group > b.group ?  1 : 0); });
+			}
 			else if(event.kind == "delete")
 			{
 				for(var i = 0; i < this.teaModel.items.length; i++) 
@@ -125,33 +142,11 @@ MainAssistant.prototype.activate = function(event)
 					}
 				}
 			}
-			
-			this.teaModel.items.sort(function(a,b) { return a.group < b.group ? -1 : (a.group > b.group ?  1 : 0); });
 		}
 		
+		this.controller.modelChanged(this.teaModel);
 		this.db.add("teas", this.teaModel.items, this.dbSuccess.bind(this), this.dbFailed.bind(this));
 	}
-	
-	for(var i = 0; i < this.teaModel.items.length; i++)
-	{	
-	    this.teaModel.items[i].min = this.teaModel.items[i].steepings[this.teaModel.items[i].steeped].min;
-	    this.teaModel.items[i].temp = this.teaModel.items[i].steepings[this.teaModel.items[i].steeped].temp;
-	
-	    if(this.teaModel.items[i].steepings[this.teaModel.items[i].steeped].sec < 10)
-	    	this.teaModel.items[i].secLabel = '0' + this.teaModel.items[i].steepings[this.teaModel.items[i].steeped].sec;
-	    else
-	    	this.teaModel.items[i].secLabel = this.teaModel.items[i].steepings[this.teaModel.items[i].steeped].sec;
-	    	
-	    if(this.teaModel.items[i].steeped > 1)
-	    	this.teaModel.items[i].steepedLabel = " - " + this.teaModel.items[i].steeped + " steepings";
-	    else if(this.teaModel.items[i].steeped == 1)
-	    	this.teaModel.items[i].steepedLabel = " - 1 steeping";
-	    else
-	    	this.teaModel.items[i].steepedLabel = "";
-	}
-	
-	this.controller.modelChanged(this.teaModel);
-
 
 	this.loadTimerHandler = this.loadTimer.bindAsEventListener(this);  
 	Mojo.Event.listen(this.controller.get('tea-list'), Mojo.Event.listTap, this.loadTimerHandler);   

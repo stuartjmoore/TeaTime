@@ -2,16 +2,15 @@
 function TimerAssistant(tea) 
 {  
 	this.tea = tea;
-	this.min = tea.steepings[tea.steeped].min;     
-	this.sec = tea.steepings[tea.steeped].sec;
 	
-	this.timeleft = this.sec + 60*this.min;
-	this.time = this.sec + 60*this.min;
+	this.time = tea.steepings[tea.steeped].time;
+	this.timeleft = this.time;
 	
 	this.pause = false;
     
 	this.start_date = new Date();
 	this.timer = setInterval(this.updateTimer.bind(this), 1000);
+	//this.timer = setInterval(this.finishTimer.bind(this), this.time);
 }
 
 TimerAssistant.prototype.setup = function() 
@@ -43,12 +42,31 @@ TimerAssistant.prototype.updateTimer = function()
 	
 	if(this.timeleft <= 0)
 	{	
+		Mojo.Controller.getAppController().playSoundNotification("vibrate", "");
 		clearInterval(this.timer);
 		
 		this.tea.steeped += 1;
 		
 		if(this.tea.steeped == this.tea.steepings.length)
 			this.tea.steeped = 0;
+			
+            	
+		sec = this.tea.steepings[this.tea.steeped].time % 60;
+		min = (this.tea.steepings[this.tea.steeped].time - sec) / 60;
+				
+		if(sec < 10)
+		   	this.tea.timeLabel = min + ":0" + sec;
+		else
+		    this.tea.timeLabel = min + ":" + sec;
+
+		this.tea.tempLabel = this.tea.steepings[this.tea.steeped].temp + "&deg;F";
+		
+		if(this.tea.steeped > 1)
+		   	this.tea.steepingsLabel = " - " + this.tea.steeped + " steepings";
+		else if(this.tea.steeped == 1)
+			this.tea.steepingsLabel = " - 1 steeping";
+		else
+			this.tea.steepingsLabel = "";
 		
 		Mojo.Controller.stageController.popScene("timer done");
 	}
@@ -79,16 +97,23 @@ TimerAssistant.prototype.handleCommand = function(event)
         switch(event.command) 
         {
             case 'edit':  
-				this.time = this.timeleft;
-            	this.pause = true;
-				clearInterval(this.timer);
-				this.controller.get('timer-pause').innerHTML = '<div class="palm-button-wrapper">Continue</div>';
-				Mojo.Controller.stageController.pushScene("new-tea", this.tea);
-				//Mojo.Controller.StageController.swapScene(sceneArguments)
+				Mojo.Controller.stageController.swapScene("new-tea", this.tea);
                 break;
             case 'reset': 
             	this.tea.steeped = 0;
-				Mojo.Controller.stageController.popScene("timer reset");
+            	
+				sec = this.tea.steepings[0].time % 60;
+				min = (this.tea.steepings[0].time - sec) / 60;
+				
+		   		if(sec < 10)
+		    		this.tea.timeLabel = min + ":0" + sec;
+		    	else
+		    		this.tea.timeLabel = min + ":" + sec;
+
+				this.tea.tempLabel = this.tea.steepings[0].temp + "&deg;F";
+				this.tea.steepingsLabel = "";
+				
+				Mojo.Controller.stageController.popScene("steepings reset");
                 break; 
         }
     }
@@ -112,7 +137,7 @@ TimerAssistant.prototype.cleanup = function(event)
 };
 
 /*
- * Basically all timer functions are from: http://code.google.com/p/webos-teatimer/
+ * From: http://code.google.com/p/webos-teatimer/
  */
 function secToString(seconds) 
 {

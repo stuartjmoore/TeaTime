@@ -4,8 +4,8 @@ function NewSteepingAssistant(steeping)
 	if(steeping)
 	{
 		this.steeping = steeping;	
-		this.min = steeping.min;
-		this.sec = steeping.sec;
+		this.sec = steeping.time % 60;
+		this.min = (steeping.time - this.sec) / 60;
 		this.temp = steeping.temp;
 		this.isNew = false;
 	}
@@ -59,15 +59,7 @@ NewSteepingAssistant.prototype.setup = function()
         	value: this.temp
     	}
 	); 
-	
-	
-    this.appMenuModel = {
-    	items: [
-       		{label: "Delete Steeping", command: 'delete-steeping', disabled: this.isNew}
-    	]
-	};
-	this.controller.setupWidget(Mojo.Menu.appMenu, {}, this.appMenuModel); 
-    
+	    
 	this.cmdMenuModel = 
 	{
     	visible: true,
@@ -91,41 +83,29 @@ NewSteepingAssistant.prototype.handleCommand = function(event)
         switch(event.command) 
         {
             case 'done':
-            	if(!this.steeping.min)
+            	if(!this.steeping.time)
             		this.kind = "new";
             	else
             		this.kind = "replace";
-            		
-				this.steeping.min = this.min;
-				this.steeping.sec = this.sec;
+            	
+				this.steeping.time = this.sec + 60*this.min;
 				this.steeping.temp = this.temp;
+				
+			
+		   		if(this.sec < 10)
+		    		this.steeping.timeLabel = this.min + ":" + '0' + this.sec;
+		    	else
+		    		this.steeping.timeLabel = this.min + ":" + this.sec;
+		    		
+				this.steeping.tempLabel = this.temp + "&deg;F";
+				
 				
             	this.result = {kind:this.kind, steeping:this.steeping};
 				
 				Mojo.Controller.stageController.popScenesTo("new-tea", this.result);
                 break;
-        	case 'delete-steeping':
-				this.controller.showAlertDialog({
-			    	onChoose: this.deleteSteeping.bindAsEventListener(this),
-			    	title: $L("Delete?"),
-			    	message: $L("Are you sure you want to delete this steeping?"),
-			    	choices:[
-			    	    {label:$L("Delete Steeping"), value:"delete", type:'negative'},    
-			    	    {label:$L("Cancel"), value:"cancel", type:'dismiss'}    
-			    	]
-				}); 
-        		break;
         }
     }
-};
-
-NewSteepingAssistant.prototype.deleteSteeping = function(event) 
-{
-	if(event == "delete")
-	{
-        this.result = {kind:"delete", steeping:this.steeping};
-		Mojo.Controller.stageController.popScenesTo("new-tea", this.result);
-	}
 };
 
 NewSteepingAssistant.prototype.activate = function(event) 

@@ -61,6 +61,13 @@ NewTeaAssistant.prototype.setup = function()
     ); 
     
         
+    this.appMenuModel = {
+    	items: [
+       		{label: "Delete Tea", command: 'delete-tea', disabled: this.isNew}
+    	]
+	};
+	this.controller.setupWidget(Mojo.Menu.appMenu, {}, this.appMenuModel); 
+	
 	this.cmdMenuModel = 
 	{
     	visible: true,
@@ -161,14 +168,37 @@ NewTeaAssistant.prototype.handleCommand = function(event)
             	
 				this.tea.title = this.title;
 				this.tea.group = this.group;
-				this.tea.steeped = this.steeped;
+				this.tea.steeped = 0;
 				this.tea.steepings = this.steepings;
+				
+				sec = this.tea.steepings[0].time % 60;
+				min = (this.tea.steepings[0].time - sec) / 60;
+				
+		   		if(sec < 10)
+		    		this.tea.timeLabel = min + ":0" + sec;
+		    	else
+		    		this.tea.timeLabel = min + ":" + sec;
+
+				this.tea.tempLabel = this.tea.steepings[0].temp + "&deg;F";
+				this.tea.steepingsLabel = "";
+				
 				
             	this.result = {kind:this.kind, tea:this.tea};
 			
 				Mojo.Controller.stageController.popScenesTo("main", this.result);
 					
                 break;
+        	case 'delete-tea':
+				this.controller.showAlertDialog({
+			    	onChoose: this.deleteTea.bindAsEventListener(this),
+			    	title: $L("Delete?"),
+			    	message: $L("Are you sure you want to delete this tea?"),
+			    	choices:[
+			    	    {label:$L("Delete Tea"), value:"delete", type:'negative'},    
+			    	    {label:$L("Cancel"), value:"cancel", type:'dismiss'}    
+			    	]
+				}); 
+        		break;
         }
     }
 }; 
@@ -178,23 +208,7 @@ NewTeaAssistant.prototype.activate = function(event)
 	if(event)
 	{
 		if(event.kind == "new")
-		{
-			if(event.steeping.sec < 10)
-	    		secLabel = '0' + event.steeping.sec;
-	   		else
-	    		secLabel = event.steeping.sec;
-	    	
-			this.steepings.push({ min : event.steeping.min, sec: event.steeping.sec, temp: event.steeping.temp });
-		}
-		
-		//this needs to change
-		for(var i = 0; i < this.steepingModel.items.length; i++)
-		{	
-			if(this.steepingModel.items[i].sec < 10)
-	    		this.steepingModel.items[i].secLabel = '0' + this.steepingModel.items[i].sec;
-	    	else
-	    		this.steepingModel.items[i].secLabel = this.steepingModel.items[i].sec;
-		}
+			this.steepings.push(event.steeping);
 		
 		this.controller.modelChanged(this.steepingModel);
 	}
