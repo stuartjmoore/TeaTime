@@ -1,23 +1,14 @@
+
 function NewTeaAssistant(tea) 
 {
 	if(!tea)
 	{
-        this.tea = {};
-		this.title = '';
-		this.group = 'type';
-		this.notes = '';
-		this.steepings = [];	
-		this.steeped = 0;
+        this.tea = new Tea();
 		this.isNew = true;
 	}
 	else
 	{
 		this.tea = tea;
-		this.title = tea.title;
-		this.group = tea.group;
-		this.notes = '';
-		this.steepings = tea.steepings;	
-		this.steeped = tea.steeped;
 		this.isNew = false;
 	}
 }
@@ -25,65 +16,75 @@ function NewTeaAssistant(tea)
 NewTeaAssistant.prototype.setup = function()
 {	
 	this.controller.setupWidget("teaName", 
-	{
-		hintText : 'Name',
-		autoFocus: true,
-		autoReplace: true,
-		textCase: Mojo.Widget.steModeTitleCase,
-    	multiline: false,
-    	enterSubmits: true
-	}, this.nameModel = { value : this.title });
+		{
+			hintText : 'Name',
+			autoFocus: true,
+			autoReplace: true,
+			textCase: Mojo.Widget.steModeTitleCase,
+    		multiline: false,
+    		enterSubmits: true
+		}, 
+		this.nameModel = {
+			value : this.tea.title
+		}
+	);
+	
+	this.controller.get('teaType').innerHTML = this.tea.group;
+	
+
+	this.controller.setupWidget("steeping-list",
+		{  
+        	listTemplate: "new-tea/steeping-list-temp",
+			itemTemplate: "new-tea/steeping-row-temp", 
+        	addItemLabel: "New Steeping...",
+			swipeToDelete: true,
+			reorderable: true,
+			renderLimit: 20
+		},
+		this.steepingModel = {
+			listTitle : $L("Steepings"), 
+			items : this.tea.steepings 
+		}
+	);  
 	
 	
-	this.controller.get('teaType').innerHTML = this.group;
-	
-	
-	this.steepingAttr = {  
-        listTemplate: "new-tea/steeping-list-temp",
-		itemTemplate: "new-tea/steeping-row-temp", 
-        addItemLabel: "New Steeping...",
-		swipeToDelete: true,
-		reorderable: true,
-		renderLimit: 20
-	};  
-	this.steepingModel = { listTitle : $L("Steepings"), items : this.steepings };
-	this.controller.setupWidget("steeping-list", this.steepingAttr, this.steepingModel);  
-	
-	
-	this.controller.setupWidget("teaNotes",
+	/*this.controller.setupWidget("teaNotes",
 		{
             hintText: 'Notes',
             multiline: true
 		},
 		this.notesModel = {
-			value: this.notes
+			value: this.tea.notes
 		}
-    ); 
+    );*/
     
-        
-    this.appMenuModel = {
-    	items: [
-       		{label: "Delete Tea", command: 'delete-tea', disabled: this.isNew}
-    	]
-	};
-	this.controller.setupWidget(Mojo.Menu.appMenu, {}, this.appMenuModel); 
+
+	this.controller.setupWidget(Mojo.Menu.appMenu, 
+		{}, 
+		this.appMenuModel = {
+    		items: [
+       			{label: "Delete Tea", command: 'delete-tea', disabled: this.isNew}
+    		]
+		}
+	); 
 	
-	this.cmdMenuModel = 
-	{
-    	visible: true,
-    	items: 
-    	[
-        	{ items:[{ label:$L('Done'), command:'done' }] }
-    	]
-	};
-	this.controller.setupWidget(Mojo.Menu.commandMenu, undefined, this.cmdMenuModel);
+	
+	this.controller.setupWidget(Mojo.Menu.commandMenu, 
+		undefined, 
+		this.cmdMenuModel = {
+	    	visible: this.isNew,
+	    	items: [
+	       		{ items:[{ label:$L('Done'), command:'done' }] }
+	    	]
+		}
+	);
 };
 
 NewTeaAssistant.prototype.typeSelector = function(event) 
 {
 	this.controller.popupSubmenu(
 	{
-		onChoose: this.popupChoose,
+		onChoose: this.updateType,
 		placeNear: event.target,
 		items:[
             { label : 'Black', command: 'black' },
@@ -97,30 +98,35 @@ NewTeaAssistant.prototype.typeSelector = function(event)
 	});
 };
 
-NewTeaAssistant.prototype.popupChoose = function(command) 
+NewTeaAssistant.prototype.updateType = function(command) 
 {
-	$('teaType').innerHTML = command;
-	this.group = command;
+	if(command)
+	{
+		$("teaType").innerHTML = command;
+		this.tea.group = command;
+	}
 };
+
+NewTeaAssistant.prototype.updateTitle = function(event)
+{	
+	this.tea.title = event.value;
+}
 
 
 NewTeaAssistant.prototype.newSteeping = function(event) 
 {
 	Mojo.Controller.stageController.pushScene("new-steeping");  
 };
-
 NewTeaAssistant.prototype.reorderSteeping = function(event) 
 {
-	temp = this.steepings[event.fromIndex];
-	this.steepings.splice(event.fromIndex, 1);
-	this.steepings.splice(event.toIndex, 0, temp);
+	temp = this.tea.steepings[event.fromIndex];
+	this.tea.steepings.splice(event.fromIndex, 1);
+	this.tea.steepings.splice(event.toIndex, 0, temp);
 };
-
 NewTeaAssistant.prototype.deleteSteeping = function(event) 
 {
-	this.steepings.splice(event.index, 1);
+	this.tea.steepings.splice(event.index, 1);
 };
-
 NewTeaAssistant.prototype.editSteeping = function(event) 
 {
 	Mojo.Controller.stageController.pushScene("new-steeping", event.item); 
@@ -131,60 +137,39 @@ NewTeaAssistant.prototype.deleteTea = function(event)
 {
 	if(event == "delete")
 	{
-        this.result = {kind:"delete", tea:this.tea};
+        this.result = { kind:"delete", tea:this.tea };
 		Mojo.Controller.stageController.popScenesTo("main", this.result);
 	}
 };
 
 NewTeaAssistant.prototype.handleCommand = function(event) 
 {
-	this.title = this.nameModel.value;
-
     if(event.type == Mojo.Event.command) 
     {
         switch(event.command) 
         {
             case 'done':
-            	if(!this.title)
+            	if(!this.tea.title)
             	{
             		Mojo.Controller.errorDialog("Your tea needs a name!");
             		break;
             	}
-            	if(this.group == 'type' || !this.group)
+            	if(this.tea.group == 'type' || !this.tea.group)
             	{
             		Mojo.Controller.errorDialog("Your tea needs a type!");
             		break;
             	}
-            	if(this.steepings.length == 0)
+            	if(this.tea.steepings.length == 0)
             	{
             		Mojo.Controller.errorDialog("Your tea needs some steepings!");
             		break;
             	}
             	
-            	if(!this.tea.title)
-            		this.kind = "new";
-            	else
-            		this.kind = "replace";
-            	
-				this.tea.title = this.title;
-				this.tea.group = this.group;
-				this.tea.steeped = 0;
-				this.tea.steepings = this.steepings;
+            	this.tea.setTimeLabel();
+            	this.tea.setTempLabel();
+				this.tea.setSteepingLabel();
 				
-				sec = this.tea.steepings[0].time % 60;
-				min = (this.tea.steepings[0].time - sec) / 60;
-				
-		   		if(sec < 10)
-		    		this.tea.timeLabel = min + ":0" + sec;
-		    	else
-		    		this.tea.timeLabel = min + ":" + sec;
-
-				this.tea.tempLabel = this.tea.steepings[0].temp + "&deg;F";
-				this.tea.steepingsLabel = "";
-				
-				
-            	this.result = {kind:this.kind, tea:this.tea};
-			
+            	this.result = { kind:"new", tea:this.tea };
 				Mojo.Controller.stageController.popScenesTo("main", this.result);
 					
                 break;
@@ -194,8 +179,8 @@ NewTeaAssistant.prototype.handleCommand = function(event)
 			    	title: $L("Delete?"),
 			    	message: $L("Are you sure you want to delete this tea?"),
 			    	choices:[
-			    	    {label:$L("Delete Tea"), value:"delete", type:'negative'},    
-			    	    {label:$L("Cancel"), value:"cancel", type:'dismiss'}    
+			    	    { label:$L("Delete Tea"), value:"delete", type:"negative" },    
+			    	    { label:$L("Cancel"), value:"cancel", type:"dismiss" }    
 			    	]
 				}); 
         		break;
@@ -208,11 +193,20 @@ NewTeaAssistant.prototype.activate = function(event)
 	if(event)
 	{
 		if(event.kind == "new")
-			this.steepings.push(event.steeping);
-		
-		this.controller.modelChanged(this.steepingModel);
+			this.tea.steepings.push(event.steeping);
 	}
-			
+	
+	this.tea.setTimeLabel();
+	this.tea.setTempLabel();
+	this.tea.setSteepingLabel();
+	
+	this.controller.modelChanged(this.steepingModel);
+	
+	
+	
+	this.updateTitleHandler = this.updateTitle.bindAsEventListener(this); 
+	Mojo.Event.listen(this.controller.get("teaName"), Mojo.Event.propertyChange, this.updateTitleHandler);
+	
 		
 	this.typeSelectorHandler = this.typeSelector.bindAsEventListener(this);
 	this.controller.get('tea-type-button').observe(Mojo.Event.tap, this.typeSelectorHandler );
@@ -232,14 +226,13 @@ NewTeaAssistant.prototype.activate = function(event)
 
 NewTeaAssistant.prototype.deactivate = function(event) 
 {
+	this.controller.stopListening("teaName", Mojo.Event.propertyChange, this.updateTitleHandler);
+
 	this.controller.get('tea-type-button').stopObserving(Mojo.Event.tap, this.typeSelectorHandler);
 	
 	this.controller.get('steeping-list').stopObserving(Mojo.Event.listAdd, this.newSteepingHandler);
-	
 	this.controller.get('steeping-list').stopObserving(Mojo.Event.listDelete, this.deleteSteepingHandler);
-	
 	this.controller.get('steeping-list').stopObserving(Mojo.Event.listReorder, this.reorderSteepingHandler);
-	
 	this.controller.get('steeping-list').stopObserving(Mojo.Event.listTap, this.editSteepingHandler);
 };
 

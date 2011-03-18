@@ -1,5 +1,13 @@
 [
-    {"source": "app/assistants/stage-assistant.js"},
+    {
+    	"source": "app/assistants/stage-assistant.js"
+    },
+    {
+    	"source": "app/models/tea.js"
+    },
+    {
+    	"source": "app/models/steeping.js"
+    },
     {
         "scenes": "main",
         "source": "app/assistants/main-assistant.js"

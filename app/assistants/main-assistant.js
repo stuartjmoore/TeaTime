@@ -36,12 +36,13 @@ MainAssistant.prototype.dbOpened = function()
 };
 
 MainAssistant.prototype.dbTeasGot = function(teas)
-{
+{       
 	if(teas)
 		this.teaModel.items = teas;
 	
 	if(this.teaModel.items.length > 0 && !this.teaModel.items[0].timeLabel) // Change db.
 	{
+        Mojo.Log.info("Updating database times.");
 		for(var i = 0; i < this.teaModel.items.length; i++)
 		{ 
 		    if(this.teaModel.items[i].steeped > 1)
@@ -75,7 +76,45 @@ MainAssistant.prototype.dbTeasGot = function(teas)
 				}
 			}
 		}	
+		this.teaModel.items.sort(function(a,b){ a = a.group+a.title; b = b.group+b.title; return a==b ? 0 : (a < b ? -1 : 1) });
+		this.db.add("teas", this.teaModel.items, this.dbSuccess.bind(this), this.dbFailed.bind(this));
 	}
+	
+	if(this.teaModel.items.length > 0 && this.teaModel.items[0].class != "Tea") // Update db to Tea model.
+	{
+        Mojo.Log.info("Updating database tea models.");
+		for(var i = 0; i < this.teaModel.items.length; i++)
+		{ 
+			this.teaModel.items[i] = new Tea(this.teaModel.items[i].title, 
+											 this.teaModel.items[i].group, 
+											 this.teaModel.items[i].notes, 
+											 this.teaModel.items[i].steepings, 
+											 this.teaModel.items[i].steeped, 
+											 this.teaModel.items[i].timeLabel, 
+											 this.teaModel.items[i].tempLabel, 
+											 this.teaModel.items[i].steepingsLabel);
+		}
+		this.teaModel.items.sort(function(a,b){ a = a.group+a.title; b = b.group+b.title; return a==b ? 0 : (a < b ? -1 : 1) });
+		this.db.add("teas", this.teaModel.items, this.dbSuccess.bind(this), this.dbFailed.bind(this));
+	}
+	
+	if(this.teaModel.items.length > 0 && this.teaModel.items[0].steepings[0].class != "Steeping") // Update db to Steeping model.
+	{
+        Mojo.Log.info("Updating database steeping models.");
+		for(var i = 0; i < this.teaModel.items.length; i++)
+		{ 
+			for(var j = 0; j < this.teaModel.items.steepings.length; j++)
+			{
+				this.teaModel.items[i].steepings[j] = new Steeping(this.teaModel.items[i].steepings[j].time,
+																   this.teaModel.items[i].steepings[j].temp,
+																   this.teaModel.items[i].steepings[j].timeLabel,
+																   this.teaModel.items[i].steepings[j].tempLabel);
+			}
+		}
+		this.teaModel.items.sort(function(a,b){ a = a.group+a.title; b = b.group+b.title; return a==b ? 0 : (a < b ? -1 : 1) });
+		this.db.add("teas", this.teaModel.items, this.dbSuccess.bind(this), this.dbFailed.bind(this));
+	}
+	
 	
 	this.controller.modelChanged(this.teaModel);
 };
@@ -113,7 +152,7 @@ MainAssistant.prototype.handleCommand = function(event)
 };
 
 MainAssistant.prototype.activate = function(event) 
-{  
+{
 	if(event)
 	{
 		if(event == "timer done")
@@ -127,9 +166,19 @@ MainAssistant.prototype.activate = function(event)
 		else
 		{
 			if(event.kind == "new")
-			{
-				this.teaModel.items.push(event.tea);
-				this.teaModel.items.sort(function(a,b){ return a.group < b.group ? -1 : (a.group > b.group ?  1 : 0); });
+			{	
+				added = false;
+				for(var i = 0; i < this.teaModel.items.length; i++) 
+				{
+        			if(this.teaModel.items[i].group+this.teaModel.items[i].title > event.tea.group+event.tea.title) 
+        			{
+						this.teaModel.items.splice(i, 0, event.tea);
+						added = true;
+            			break;
+					}
+				}
+				if(!added)
+					this.teaModel.items.push(event.tea);
 			}
 			else if(event.kind == "delete")
 			{
@@ -144,9 +193,12 @@ MainAssistant.prototype.activate = function(event)
 			}
 		}
 		
-		this.controller.modelChanged(this.teaModel);
-		this.db.add("teas", this.teaModel.items, this.dbSuccess.bind(this), this.dbFailed.bind(this));
 	}
+	this.controller.modelChanged(this.teaModel);
+	
+	if(this.teaModel.items.length > 0)
+		this.db.add("teas", this.teaModel.items, this.dbSuccess.bind(this), this.dbFailed.bind(this));
+
 
 	this.loadTimerHandler = this.loadTimer.bindAsEventListener(this);  
 	Mojo.Event.listen(this.controller.get('tea-list'), Mojo.Event.listTap, this.loadTimerHandler);   
@@ -154,7 +206,7 @@ MainAssistant.prototype.activate = function(event)
 
 MainAssistant.prototype.deactivate = function(event)
 {
-	Mojo.Event.stopListening(this.controller.get('tea-list'), Mojo.Event.listTap, this.loadTimerHandler); 
+	Mojo.Event.stopListening(this.controller.get('tea-list'), Mojo.Event.listTap, this.loadTimerHandler);
 };
 
 MainAssistant.prototype.cleanup = function(event) 

@@ -10,7 +10,7 @@ function TimerAssistant(tea)
     
 	this.start_date = new Date();
 	this.timer = setInterval(this.updateTimer.bind(this), 1000);
-	//this.timer = setInterval(this.finishTimer.bind(this), this.time);
+	this.delay = this.finishTimer.bind(this).delay(this.time);
 }
 
 TimerAssistant.prototype.setup = function() 
@@ -18,19 +18,19 @@ TimerAssistant.prototype.setup = function()
 	this.controller.get('title').innerHTML = this.tea.title;
 	this.controller.get('timer').innerHTML = secToString(this.time);
 	
-	
-	this.cmdMenuModel = 
-	{
-    	visible: true,
-    	items: 
-    	[
-        	{ items:[] },
-        	{ items:[] },
-        	{ items:[{ label:$L('Edit'), command:'edit' },{ label:$L('Reset Steepings'), command:'reset' }] }
-    	]
-	};
  
-	this.controller.setupWidget(Mojo.Menu.commandMenu, undefined, this.cmdMenuModel);
+	this.controller.setupWidget(Mojo.Menu.commandMenu,
+		undefined, 
+		this.cmdMenuModel = {
+    		visible: true,
+    		items: 
+    		[
+        		{ items:[] },
+        		{ items:[] },
+        		{ items:[{ label:$L('Edit'), command:'edit' },{ label:$L('Reset Steepings'), command:'reset' }] }
+    		]
+		}
+	);
 };
 
 TimerAssistant.prototype.updateTimer = function() 
@@ -39,38 +39,35 @@ TimerAssistant.prototype.updateTimer = function()
 	this.timeleft = this.time - ((cur.getTime() - this.start_date.getTime()) / 1000).toFixed(0);
 	
 	this.controller.get('timer').innerHTML = secToString(this.timeleft);
-	
+
 	if(this.timeleft <= 0)
 	{	
 		Mojo.Controller.getAppController().playSoundNotification("vibrate", "");
 		clearInterval(this.timer);
-		
-		this.tea.steeped += 1;
-		
-		if(this.tea.steeped == this.tea.steepings.length)
-			this.tea.steeped = 0;
-			
-            	
-		sec = this.tea.steepings[this.tea.steeped].time % 60;
-		min = (this.tea.steepings[this.tea.steeped].time - sec) / 60;
-				
-		if(sec < 10)
-		   	this.tea.timeLabel = min + ":0" + sec;
-		else
-		    this.tea.timeLabel = min + ":" + sec;
-
-		this.tea.tempLabel = this.tea.steepings[this.tea.steeped].temp + "&deg;F";
-		
-		if(this.tea.steeped > 1)
-		   	this.tea.steepingsLabel = " - " + this.tea.steeped + " steepings";
-		else if(this.tea.steeped == 1)
-			this.tea.steepingsLabel = " - 1 steeping";
-		else
-			this.tea.steepingsLabel = "";
-		
-		Mojo.Controller.stageController.popScene("timer done");
 	}
 };
+
+TimerAssistant.prototype.finishTimer = function(event) 
+{
+	Mojo.Controller.getAppController().playSoundNotification("vibrate", "");
+	
+	this.tea.steeped += 1;
+	
+	if(this.tea.steeped == this.tea.steepings.length)
+	    this.tea.steeped = 0;
+	    
+    this.tea.timeLabel = secToString(this.tea.steepings[this.tea.steeped].time);
+	this.tea.tempLabel = this.tea.steepings[this.tea.steeped].temp + "&deg;F";
+	
+	if(this.tea.steeped > 1)
+	   	this.tea.steepingsLabel = " - " + this.tea.steeped + " steepings";
+	else if(this.tea.steeped == 1)
+	    this.tea.steepingsLabel = " - 1 steeping";
+	else
+	    this.tea.steepingsLabel = "";
+	
+	Mojo.Controller.stageController.popScene("timer done");
+}
 
 TimerAssistant.prototype.pauseTimer = function(event) 
 {
@@ -80,12 +77,14 @@ TimerAssistant.prototype.pauseTimer = function(event)
 	{
 		this.time = this.timeleft;
 		clearInterval(this.timer);
+		window.clearTimeout(this.delay);
 		this.controller.get('timer-pause').innerHTML = '<div class="palm-button-wrapper">Continue</div>';
 	}
 	else
 	{
         this.start_date = new Date();
 		this.timer = setInterval(this.updateTimer.bind(this), 1000);
+		this.delay = this.finishTimer.bind(this).delay(this.time);
 		this.controller.get('timer-pause').innerHTML = '<div class="palm-button-wrapper">Pause</div>';
 	}
 };
@@ -101,15 +100,8 @@ TimerAssistant.prototype.handleCommand = function(event)
                 break;
             case 'reset': 
             	this.tea.steeped = 0;
-            	
-				sec = this.tea.steepings[0].time % 60;
-				min = (this.tea.steepings[0].time - sec) / 60;
 				
-		   		if(sec < 10)
-		    		this.tea.timeLabel = min + ":0" + sec;
-		    	else
-		    		this.tea.timeLabel = min + ":" + sec;
-
+				this.tea.timeLabel = secToString(this.tea.steepings[0].time);
 				this.tea.tempLabel = this.tea.steepings[0].temp + "&deg;F";
 				this.tea.steepingsLabel = "";
 				
@@ -130,11 +122,13 @@ TimerAssistant.prototype.deactivate = function(event)
 	this.controller.get('timer-pause').stopObserving(Mojo.Event.tap, this.pauseTimerHandler);
 	
 	clearInterval(this.timer);
+	window.clearTimeout(this.delay);
 };
 
 TimerAssistant.prototype.cleanup = function(event) 
 {
 };
+
 
 /*
  * From: http://code.google.com/p/webos-teatimer/
