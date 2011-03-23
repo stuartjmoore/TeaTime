@@ -1,50 +1,49 @@
-function Tea(title, group, notes, steepings, steeped, timeLabel, tempLabel, steepingsLabel)
+
+function Tea(tea)
 {
-	if(title)
-		this.title = title;
+	if(tea)
+		this.title = tea.title;
 	else
 		this.title = "";
 		
-	if(group)
-		this.group = group;
+	if(tea)
+		this.group = tea.group;
 	else
 		this.group = "type";
 	
-	if(notes)
-		this.notes = notes;
+	if(tea)
+		this.notes = tea.notes;
 	else
 		this.notes = "";
 	
-	if(steepings)
-		this.steepings = steepings;
+	if(tea)
+		this.steepings = tea.steepings;
 	else
 		this.steepings = [];	
 	
-	if(steeped)
-		this.steeped = steeped;
+	if(tea)
+		this.steeped = tea.steeped;
 	else
 		this.steeped = 0;
 
 	
-	if(timeLabel)
-		this.timeLabel = timeLabel;
+	if(tea)
+		this.timeLabel = tea.timeLabel;
 	else
 		this.timeLabel = "0:00";
 	
-	if(tempLabel)
-		this.tempLabel = tempLabel
+	if(tea)
+		this.tempLabel = tea.tempLabel;
 	else
 		this.tempLabel = "0&deg;F";
 		
-	if(steepingsLabel)
-		this.steepingsLabel = steepingsLabel;
+	if(tea)
+		this.steepingsLabel = tea.steepingsLabel;
 	else
 		this.steepingsLabel = "";
-		
-	this.class = "Tea";
 }
 
-Tea.prototype.setTimeLabel = function() 
+Tea.prototype.setTimeLabel = function()
 {	
 	if(this.steepings.length > 0)
 	{

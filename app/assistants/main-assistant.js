@@ -2,45 +2,53 @@
 function MainAssistant() 
 {
 	this.teaModel = {items : []};
-	this.db = new Mojo.Depot({name:"teaList", version:1, replace:false}, this.dbOpened.bind(this), this.dbFailed.bind(this));
+	db.get("teas", this.dbTeasGot.bind(this), this.dbFailed.bind(this));
 }
 
 MainAssistant.prototype.setup = function() 
 {
-	this.listAttr = {  
-		itemTemplate: "main/item-template", 
-		dividerTemplate: "main/divider-template", 
-    	dividerFunction: this.whatPosition, 
-		renderLimit: 20,  
-	};  
-  
-	this.controller.setupWidget("tea-list", this.listAttr, this.teaModel);  
+	this.controller.setupWidget("tea-list", 
+		{  
+			itemTemplate: "main/item-template", 
+			dividerTemplate: "main/divider-template", 
+    		dividerFunction: this.whatPosition, 
+			renderLimit: 20,  
+		},
+		this.teaModel
+	);  
 	
 	
-	this.cmdMenuModel = 
-	{
-    	visible: true,
-    	items: 
-    	[
-        	{ items:[{ label:$L('New'), icon:'new', command:'new' }] }
-    	]
-	};
- 
-	this.controller.setupWidget(Mojo.Menu.commandMenu, undefined, this.cmdMenuModel);
+	this.controller.setupWidget( Mojo.Menu.commandMenu, 
+		undefined, 
+		{
+    		visible: true,
+    		items: 
+    		[
+        		{ items:[{ label:$L('New'), icon:'new', command:'new' }] }
+    		]
+		}
+	);
+	
+
+	this.controller.setupWidget( Mojo.Menu.appMenu, 
+		{ omitDefaultItems: true }, 
+		{
+			visible: true,
+			items: [
+				Mojo.Menu.editItem,
+				{label: "Preferences", command: "preferences"},
+				{label: "Help", command: "help", disabled:true}
+			]
+		}
+	);
 };  
-
-
-MainAssistant.prototype.dbOpened = function()
-{
-	this.db.get("teas", this.dbTeasGot.bind(this), this.dbFailed.bind(this));
-};
 
 MainAssistant.prototype.dbTeasGot = function(teas)
 {       
 	if(teas)
 		this.teaModel.items = teas;
 	
-	if(this.teaModel.items.length > 0 && !this.teaModel.items[0].timeLabel) // Change db.
+	if(this.teaModel.items.length > 0 && !this.teaModel.items[0].timeLabel) // update db to v1.1.
 	{
         Mojo.Log.info("Updating database times.");
 		for(var i = 0; i < this.teaModel.items.length; i++)
@@ -77,45 +85,25 @@ MainAssistant.prototype.dbTeasGot = function(teas)
 			}
 		}	
 		this.teaModel.items.sort(function(a,b){ a = a.group+a.title; b = b.group+b.title; return a==b ? 0 : (a < b ? -1 : 1) });
-		this.db.add("teas", this.teaModel.items, this.dbSuccess.bind(this), this.dbFailed.bind(this));
+		db.add("teas", this.teaModel.items, this.dbSuccess.bind(this), this.dbFailed.bind(this));
 	}
 	
-	if(this.teaModel.items.length > 0 && this.teaModel.items[0].class != "Tea") // Update db to Tea model.
+	//Depot doesn't store modelsÑonly key:valuesÑso we re-model here.
+	if(true)//(this.teaModel.items.length > 0 && this.teaModel.items[0].class != "Tea") // Update db to Tea model.
 	{
         Mojo.Log.info("Updating database tea models.");
 		for(var i = 0; i < this.teaModel.items.length; i++)
 		{ 
-			this.teaModel.items[i] = new Tea(this.teaModel.items[i].title, 
-											 this.teaModel.items[i].group, 
-											 this.teaModel.items[i].notes, 
-											 this.teaModel.items[i].steepings, 
-											 this.teaModel.items[i].steeped, 
-											 this.teaModel.items[i].timeLabel, 
-											 this.teaModel.items[i].tempLabel, 
-											 this.teaModel.items[i].steepingsLabel);
+			this.teaModel.items[i] = new Tea(this.teaModel.items[i]);
+			
+			for(var j = 0; j < this.teaModel.items[i].steepings.length; j++)
+				this.teaModel.items[i].steepings[j] = new Steeping(this.teaModel.items[i].steepings[j]);
 		}
-		this.teaModel.items.sort(function(a,b){ a = a.group+a.title; b = b.group+b.title; return a==b ? 0 : (a < b ? -1 : 1) });
-		this.db.add("teas", this.teaModel.items, this.dbSuccess.bind(this), this.dbFailed.bind(this));
+		
+		db.add("teas", this.teaModel.items, this.dbSuccess.bind(this), this.dbFailed.bind(this));
 	}
-	
-	if(this.teaModel.items.length > 0 && this.teaModel.items[0].steepings[0].class != "Steeping") // Update db to Steeping model.
-	{
-        Mojo.Log.info("Updating database steeping models.");
-		for(var i = 0; i < this.teaModel.items.length; i++)
-		{ 
-			for(var j = 0; j < this.teaModel.items.steepings.length; j++)
-			{
-				this.teaModel.items[i].steepings[j] = new Steeping(this.teaModel.items[i].steepings[j].time,
-																   this.teaModel.items[i].steepings[j].temp,
-																   this.teaModel.items[i].steepings[j].timeLabel,
-																   this.teaModel.items[i].steepings[j].tempLabel);
-			}
-		}
-		this.teaModel.items.sort(function(a,b){ a = a.group+a.title; b = b.group+b.title; return a==b ? 0 : (a < b ? -1 : 1) });
-		this.db.add("teas", this.teaModel.items, this.dbSuccess.bind(this), this.dbFailed.bind(this));
-	}
-	
-	
+
+
 	this.controller.modelChanged(this.teaModel);
 };
   
@@ -144,8 +132,11 @@ MainAssistant.prototype.handleCommand = function(event)
 	{
 		switch(event.command) 
 		{
-			case 'new':
+			case "new":
 				Mojo.Controller.stageController.pushScene("new-tea");  
+				break;
+			case "preferences":
+				Mojo.Controller.stageController.pushScene("prefs");
 				break;
 		}
 	}
@@ -165,6 +156,7 @@ MainAssistant.prototype.activate = function(event)
 		}
 		else
 		{
+			// did this so I wouldn't push & sort... yet I still need to sort...
 			if(event.kind == "new")
 			{	
 				added = false;
@@ -192,12 +184,14 @@ MainAssistant.prototype.activate = function(event)
 				}
 			}
 		}
-		
 	}
+	
+	//just in case they edit something
+	this.teaModel.items.sort(function(a,b){ a = a.group+a.title; b = b.group+b.title; return a==b ? 0 : (a < b ? -1 : 1) });
 	this.controller.modelChanged(this.teaModel);
 	
 	if(this.teaModel.items.length > 0)
-		this.db.add("teas", this.teaModel.items, this.dbSuccess.bind(this), this.dbFailed.bind(this));
+		db.add("teas", this.teaModel.items, this.dbSuccess.bind(this), this.dbFailed.bind(this));
 
 
 	this.loadTimerHandler = this.loadTimer.bindAsEventListener(this);  

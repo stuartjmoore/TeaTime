@@ -1,28 +1,25 @@
-function Steeping(time, temp, timeLabel, tempLabel)
+function Steeping(steeping)
 {
-	if(time)
-		this.time = time;
+	if(steeping)
+		this.time = steeping.time;
 	else
 		this.time = 150;
 		
-	if(temp)
-		this.temp = temp;
+	if(steeping)
+		this.temp = steeping.temp;
 	else
 		this.temp = 195;
 	
 	
-	if(timeLabel)
-		this.timeLabel = timeLabel;
+	if(steeping)
+		this.timeLabel = steeping.timeLabel;
 	else			
 	 	this.timeLabel = "2:30";
 	 	
-	if(tempLabel)
-		this.tempLabel = tempLabel
+	if(steeping)
+		this.tempLabel = steeping.tempLabel
 	else
 		this.tempLabel = "195&deg;F";
-
-		
-	this.class = "Steeping";
 }
 
 Steeping.prototype.setTime = function(time) 

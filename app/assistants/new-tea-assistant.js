@@ -8,7 +8,7 @@ function NewTeaAssistant(tea)
 	}
 	else
 	{
-		this.tea = tea;
+		this.tea = tea; 
 		this.isNew = false;
 	}
 }
@@ -57,16 +57,6 @@ NewTeaAssistant.prototype.setup = function()
 			value: this.tea.notes
 		}
     );*/
-    
-
-	this.controller.setupWidget(Mojo.Menu.appMenu, 
-		{}, 
-		this.appMenuModel = {
-    		items: [
-       			{label: "Delete Tea", command: 'delete-tea', disabled: this.isNew}
-    		]
-		}
-	); 
 	
 	
 	this.controller.setupWidget(Mojo.Menu.commandMenu, 
@@ -78,6 +68,16 @@ NewTeaAssistant.prototype.setup = function()
 	    	]
 		}
 	);
+    
+
+	this.controller.setupWidget(Mojo.Menu.appMenu, 
+		{}, 
+		this.appMenuModel = {
+    		items: [
+       			{label: "Delete Tea", command: 'delete-tea', disabled: this.isNew}
+    		]
+		}
+	); 
 };
 
 NewTeaAssistant.prototype.typeSelector = function(event) 
@@ -86,15 +86,7 @@ NewTeaAssistant.prototype.typeSelector = function(event)
 	{
 		onChoose: this.updateType,
 		placeNear: event.target,
-		items:[
-            { label : 'Black', command: 'black' },
-            { label : 'Green', command: 'green' },
-            { label : 'White', command: 'white' },
-            { label : 'Oolong', command: 'oolong' },
-            { label : 'Roobios', command: 'roobios' },
-            { label : 'Herbal', command: 'herbal' },
-            { label : 'Mate', command: 'mate' }
-		]
+		items: TeaTypes
 	});
 };
 
@@ -195,17 +187,18 @@ NewTeaAssistant.prototype.activate = function(event)
 		if(event.kind == "new")
 			this.tea.steepings.push(event.steeping);
 	}
-	
+        
+
 	this.tea.setTimeLabel();
 	this.tea.setTempLabel();
 	this.tea.setSteepingLabel();
-	
+
 	this.controller.modelChanged(this.steepingModel);
 	
 	
 	
 	this.updateTitleHandler = this.updateTitle.bindAsEventListener(this); 
-	Mojo.Event.listen(this.controller.get("teaName"), Mojo.Event.propertyChange, this.updateTitleHandler);
+	this.controller.get('teaName').observe(Mojo.Event.propertyChange, this.updateTitleHandler );
 	
 		
 	this.typeSelectorHandler = this.typeSelector.bindAsEventListener(this);
@@ -226,7 +219,7 @@ NewTeaAssistant.prototype.activate = function(event)
 
 NewTeaAssistant.prototype.deactivate = function(event) 
 {
-	this.controller.stopListening("teaName", Mojo.Event.propertyChange, this.updateTitleHandler);
+	this.controller.get('teaName').stopObserving(Mojo.Event.propertyChange, this.updateTitleHandler);
 
 	this.controller.get('tea-type-button').stopObserving(Mojo.Event.tap, this.typeSelectorHandler);
 	

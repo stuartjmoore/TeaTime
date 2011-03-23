@@ -1,13 +1,7 @@
 [
-    {
-    	"source": "app/assistants/stage-assistant.js"
-    },
-    {
-    	"source": "app/models/tea.js"
-    },
-    {
-    	"source": "app/models/steeping.js"
-    },
+    {"source": "app/assistants/stage-assistant.js"},
+    {"source": "app/models/tea.js"},
+    {"source": "app/models/steeping.js"},
     {
         "scenes": "main",
         "source": "app/assistants/main-assistant.js"
@@ -23,5 +17,9 @@
     {
         "scenes": "new-steeping",
         "source": "app/assistants/new-steeping-assistant.js"
+    },
+    {
+        "scenes": "prefs",
+        "source": "app/assistants/prefs-assistant.js"
     }
 ]

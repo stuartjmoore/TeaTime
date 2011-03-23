@@ -10,7 +10,6 @@ function TimerAssistant(tea)
     
 	this.start_date = new Date();
 	this.timer = setInterval(this.updateTimer.bind(this), 1000);
-	this.delay = this.finishTimer.bind(this).delay(this.time);
 }
 
 TimerAssistant.prototype.setup = function() 
@@ -44,30 +43,20 @@ TimerAssistant.prototype.updateTimer = function()
 	{	
 		Mojo.Controller.getAppController().playSoundNotification("vibrate", "");
 		clearInterval(this.timer);
+		Mojo.Controller.getAppController().playSoundNotification("vibrate", "");
+		
+		this.tea.steeped += 1;
+		
+		if(this.tea.steeped == this.tea.steepings.length)
+		    this.tea.steeped = 0;
+		
+		this.tea.setTimeLabel();
+		this.tea.setTempLabel();
+		this.tea.setSteepingLabel();
+		
+		Mojo.Controller.stageController.popScene("timer done");
 	}
 };
-
-TimerAssistant.prototype.finishTimer = function(event) 
-{
-	Mojo.Controller.getAppController().playSoundNotification("vibrate", "");
-	
-	this.tea.steeped += 1;
-	
-	if(this.tea.steeped == this.tea.steepings.length)
-	    this.tea.steeped = 0;
-	    
-    this.tea.timeLabel = secToString(this.tea.steepings[this.tea.steeped].time);
-	this.tea.tempLabel = this.tea.steepings[this.tea.steeped].temp + "&deg;F";
-	
-	if(this.tea.steeped > 1)
-	   	this.tea.steepingsLabel = " - " + this.tea.steeped + " steepings";
-	else if(this.tea.steeped == 1)
-	    this.tea.steepingsLabel = " - 1 steeping";
-	else
-	    this.tea.steepingsLabel = "";
-	
-	Mojo.Controller.stageController.popScene("timer done");
-}
 
 TimerAssistant.prototype.pauseTimer = function(event) 
 {
@@ -100,10 +89,10 @@ TimerAssistant.prototype.handleCommand = function(event)
                 break;
             case 'reset': 
             	this.tea.steeped = 0;
-				
-				this.tea.timeLabel = secToString(this.tea.steepings[0].time);
-				this.tea.tempLabel = this.tea.steepings[0].temp + "&deg;F";
-				this.tea.steepingsLabel = "";
+            	
+				this.tea.setTimeLabel();
+				this.tea.setTempLabel();
+				this.tea.setSteepingLabel();
 				
 				Mojo.Controller.stageController.popScene("steepings reset");
                 break; 
